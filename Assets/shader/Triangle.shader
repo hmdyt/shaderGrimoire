@@ -86,6 +86,20 @@ Shader "Custom/TriangleShader"
                 float3 diffuse_light = calc_lambert_diffuse(light_direction, light_color, o.normal_ws);
                 float3 specular_light = calc_phong_specular(light_direction, light_color, o.world_pos, o.normal_ws);
                 float3 total_light = diffuse_light + specular_light;
+
+                // point light
+                uint additional_lights_count = GetAdditionalLightsCount();
+                for (uint i = 0; i < additional_lights_count; ++i)
+                {
+                    Light light = GetAdditionalLight(i, o.world_pos);
+                    float3 direction = -light.direction;
+                    float3 color = light.color;
+                    float3 attenuation = light.distanceAttenuation;
+
+                    diffuse_light = calc_lambert_diffuse(direction, color, o.normal_ws) * attenuation;
+                    specular_light = calc_phong_specular(direction, color, o.world_pos, o.normal_ws) * attenuation;
+                    total_light += diffuse_light + specular_light;
+                }
                 
                 // ambient light
                 total_light.x += 0.3;

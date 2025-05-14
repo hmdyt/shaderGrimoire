@@ -5,42 +5,22 @@ namespace src
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public class DrawTriangle : MonoBehaviour
     {
-        public Material material;
-
         private void Start()
         {
-            SetupMesh();
+            SetupPointLight();
         }
-        
-        private void SetupMesh()
+
+        private static void SetupPointLight()
         {
-            var mesh = new Mesh();
+            var pointLightGameObject = new GameObject("PointLight");
+            var pointLight = pointLightGameObject.AddComponent<Light>();
+            pointLight.type = LightType.Point;
 
-            var vertices = new Vector3[]
-            {
-                new(-0.5f, -0.5f, 0.0f), 
-                new(0.0f, 0.5f, 0.0f), 
-                new(0.5f, -0.5f, 0) 
-            };
-        
-            var indices = new [] { 0, 1, 2 };
-
-            var colors = new [] { Color.red, Color.green, Color.blue };
+            pointLight.color = Color.yellow;
+            pointLight.intensity = 1.0f;
+            pointLight.range = 10.0f;
             
-            var uvs = new Vector2[]
-            {
-                new(0.0f, 1.0f),
-                new(0.5f, 0.0f),
-                new(1.0f, 1.0f)
-            };
-            
-            mesh.vertices = vertices;
-            mesh.triangles = indices;
-            mesh.colors = colors;
-            mesh.uv = uvs;
-        
-            GetComponent<MeshFilter>().mesh = mesh;
-            GetComponent<MeshRenderer>().material = material;
+            pointLightGameObject.transform.position = new Vector3(0, 0, 0);
         }
     }
 }
