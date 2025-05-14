@@ -40,6 +40,30 @@ Shader "Custom/TriangleShader"
 
             TEXTURE2D (_MainTex);
             SAMPLER(sampler_MainTex);
+
+            float3 calc_lambert_diffuse(half3 light_direction, half3 light_color, float3 surface_normal)
+            {
+                float t = dot(surface_normal, light_direction);
+                t *= -1.;
+                if (t < 0.)
+                {
+                    t = 0.;
+                }
+                return t * light_color;
+            }
+
+            float3 calc_phong_specular(half3 light_direction, half3 light_color, float3 surface_potision, float3 surface_normal)
+            {
+                float3 refrect_direction = reflect(light_direction, surface_normal);
+                float3 to_eye = normalize(GetCameraPositionWS() - surface_potision);
+                float t = dot(refrect_direction, to_eye);
+                if (t < 0.)
+                {
+                    t = 0.;
+                }
+                t = pow(t, 32.);
+                return t * light_color;
+            }
             
             vs_output vs_main(vs_input i)
             {
@@ -59,24 +83,8 @@ Shader "Custom/TriangleShader"
                 half3 light_direction = - GetMainLight().direction;
                 half3 light_color = GetMainLight().color;
 
-                float t = dot(o.normal_ws, light_direction);
-                t *= -1.;
-                if (t < 0.)
-                {
-                    t = 0.;
-                }
-                float3 diffuse_light = t * light_color;
-
-                float3 refrect_direction = reflect(light_direction, o.normal_ws);
-                float3 to_eye = normalize(GetCameraPositionWS() - o.world_pos);
-                t = dot(refrect_direction, to_eye);
-                if (t < 0.)
-                {
-                    t = 0.;
-                }
-                t = pow(t, 32.);
-                float3 specular_light = t * light_color;
-
+                float3 diffuse_light = calc_lambert_diffuse(light_direction, light_color, o.normal_ws);
+                float3 specular_light = calc_phong_specular(light_direction, light_color, o.world_pos, o.normal_ws);
                 float3 total_light = diffuse_light + specular_light;
                 
                 // ambient light
@@ -85,8 +93,10 @@ Shader "Custom/TriangleShader"
                 total_light.z += 0.3;
 
                 final_color.xyz *= total_light;
+
                 return final_color;
             }
+
             ENDHLSL
         }
     }
