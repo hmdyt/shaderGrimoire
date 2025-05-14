@@ -102,9 +102,9 @@ Shader "Custom/TriangleShader"
                 }
                 
                 // ambient light
-                total_light.x += 0.3;
-                total_light.y += 0.3;
-                total_light.z += 0.3;
+                total_light.x += 0.1;
+                total_light.y += 0.1;
+                total_light.z += 0.1;
 
                 final_color.xyz *= total_light;
 
