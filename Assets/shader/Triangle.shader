@@ -85,7 +85,7 @@ Shader "Custom/TriangleShader"
 
                 float3 diffuse_light = calc_lambert_diffuse(light_direction, light_color, o.normal_ws);
                 float3 specular_light = calc_phong_specular(light_direction, light_color, o.world_pos, o.normal_ws);
-                float3 total_light = diffuse_light + specular_light;
+                float3 total_light = 0.5 * (diffuse_light + specular_light);
 
                 // point light
                 uint additional_lights_count = GetAdditionalLightsCount();
