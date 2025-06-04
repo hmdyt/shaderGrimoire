@@ -94,7 +94,7 @@ Shader "Custom/TriangleShader"
                     Light light = GetAdditionalLight(i, o.world_pos);
                     float3 direction = -light.direction;
                     float3 color = light.color;
-                    float3 attenuation = light.distanceAttenuation;
+                    float attenuation = light.distanceAttenuation;
 
                     diffuse_light = calc_lambert_diffuse(direction, color, o.normal_ws) * attenuation;
                     specular_light = calc_phong_specular(direction, color, o.world_pos, o.normal_ws) * attenuation;
