@@ -64,6 +64,16 @@ Shader "Custom/TriangleShader"
                 t = pow(t, 32.);
                 return t * light_color;
             }
+
+            float3 calc_lime_light(half3 light_direction, half3 light_color, float3 surface_potision, float3 surface_normal)
+            {
+                half3 light_direction_view = TransformWorldToViewNormal(light_direction);
+                float3 surface_potision_view = TransformWorldToView(surface_potision);
+                float3 surface_normal_view = TransformWorldToViewNormal(surface_normal);
+                float power1 = 1 - saturate(dot(surface_normal_view, light_direction_view));
+                float power2 = 1 - saturate(dot(surface_normal_view, -surface_potision_view));
+                return light_color * pow(power1 * power2, 1.3);
+            }
             
             vs_output vs_main(vs_input i)
             {
@@ -85,7 +95,8 @@ Shader "Custom/TriangleShader"
 
                 float3 diffuse_light = calc_lambert_diffuse(light_direction, light_color, o.normal_ws);
                 float3 specular_light = calc_phong_specular(light_direction, light_color, o.world_pos, o.normal_ws);
-                float3 total_light = 0.5 * (diffuse_light + specular_light);
+                float3 lime_light = calc_lime_light(light_direction, light_color, o.world_pos, o.normal_ws);
+                float3 total_light = 0.5 * (diffuse_light + specular_light + lime_light);
 
                 // point light
                 uint additional_lights_count = GetAdditionalLightsCount();
