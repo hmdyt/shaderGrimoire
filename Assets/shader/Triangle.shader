@@ -4,6 +4,7 @@ Shader "Custom/TriangleShader"
     {
         _MainTex("Texture", 2D) = "white" {}
         _BumpMap("Normal Map", 2D) = "bump" {}
+        _SpecularTex("Specular Map", 2D) = "white" {}
     }
     
     SubShader
@@ -46,7 +47,8 @@ Shader "Custom/TriangleShader"
             SAMPLER(sampler_MainTex);
             TEXTURE2D (_BumpMap);
             SAMPLER(sampler_BumpMap);
-            float _BumpScale;
+            TEXTURE2D(_SpecularTex);
+            SAMPLER(sampler_SpecularTex);
 
             float3 calc_lambert_diffuse(half3 light_direction, half3 light_color, float3 surface_normal)
             {
@@ -59,8 +61,9 @@ Shader "Custom/TriangleShader"
                 return t * light_color;
             }
 
-            float3 calc_phong_specular(half3 light_direction, half3 light_color, float3 surface_potision, float3 surface_normal)
+            float3 calc_phong_specular(half3 light_direction, half3 light_color, float3 surface_potision, float3 surface_normal, float2 uv)
             {
+                float specular_power = SAMPLE_TEXTURE2D(_SpecularTex, sampler_SpecularTex, uv).a;
                 float3 refrect_direction = reflect(light_direction, surface_normal);
                 float3 to_eye = normalize(GetCameraPositionWS() - surface_potision);
                 float t = dot(refrect_direction, to_eye);
@@ -69,6 +72,7 @@ Shader "Custom/TriangleShader"
                     t = 0.;
                 }
                 t = pow(t, 32.);
+                t *= specular_power;
                 return t * light_color;
             }
 
@@ -117,7 +121,7 @@ Shader "Custom/TriangleShader"
                 half3 light_color = GetMainLight().color;
 
                 float3 diffuse_light = calc_lambert_diffuse(light_direction, light_color, normal_ws);
-                float3 specular_light = calc_phong_specular(light_direction, light_color, o.world_pos, normal_ws);
+                float3 specular_light = calc_phong_specular(light_direction, light_color, o.world_pos, normal_ws, o.uv);
                 float3 rim_light = calc_rim_light(light_direction, light_color, o.world_pos, normal_ws);
                 float3 total_light = 0.5 * (diffuse_light + specular_light + 3*rim_light);
 
@@ -131,7 +135,7 @@ Shader "Custom/TriangleShader"
                     float attenuation = light.distanceAttenuation;
 
                     diffuse_light = calc_lambert_diffuse(direction, color, normal_ws) * attenuation;
-                    specular_light = calc_phong_specular(direction, color, o.world_pos, normal_ws) * attenuation;
+                    specular_light = calc_phong_specular(direction, color, o.world_pos, normal_ws, o.uv) * attenuation;
                     total_light += diffuse_light + specular_light;
                 }
                 
