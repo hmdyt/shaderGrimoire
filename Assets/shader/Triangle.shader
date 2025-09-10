@@ -3,6 +3,7 @@ Shader "Custom/TriangleShader"
     Properties
     {
         _MainTex("Texture", 2D) = "white" {}
+        _BumpMap("Normal Map", 2D) = "bump" {}
     }
     
     SubShader
@@ -27,6 +28,7 @@ Shader "Custom/TriangleShader"
                 float3 color : COLOR;
                 float2 uv : TEXCOORD0;
                 float3 normal : NORMAL;
+                float4 tangent : TANGENT;
             };
 
             struct vs_output
@@ -35,11 +37,16 @@ Shader "Custom/TriangleShader"
                 float3 color : COLOR;
                 float2 uv : TEXCOORD0;
                 float3 world_pos : TEXCOORD1;
-                float3 normal_ws : NORMAL;
+                float3 normal_ws : TEXCOORD2;
+                float3 tangent_ws : TEXCOORD3;
+                float3 bitangent_ws : TEXCOORD4;
             };
 
             TEXTURE2D (_MainTex);
             SAMPLER(sampler_MainTex);
+            TEXTURE2D (_BumpMap);
+            SAMPLER(sampler_BumpMap);
+            float _BumpScale;
 
             float3 calc_lambert_diffuse(half3 light_direction, half3 light_color, float3 surface_normal)
             {
@@ -82,20 +89,36 @@ Shader "Custom/TriangleShader"
                 o.world_pos = TransformObjectToWorld(i.pos);
                 o.color = i.color;
                 o.uv = i.uv;
-                o.normal_ws = TransformObjectToWorldNormal(i.normal);
-                
+
+                VertexNormalInputs normal_inputs = GetVertexNormalInputs(i.normal, i.tangent);
+                o.normal_ws = normal_inputs.normalWS;
+                o.tangent_ws = normal_inputs.tangentWS;
+                o.bitangent_ws = normal_inputs.bitangentWS;
+
                 return o;
             }
 
             float4 ps_main(vs_output o) : SV_Target0
             {
                 float4 final_color = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, o.uv);
+
+                float4 normal_map = SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, o.uv);
+                float3 normal_ts = UnpackNormal(normal_map);
+
+                float3x3 tbn = float3x3(
+                    o.tangent_ws.x, o.bitangent_ws.x, o.normal_ws.x,
+                    o.tangent_ws.y, o.bitangent_ws.y, o.normal_ws.y,
+                    o.tangent_ws.z, o.bitangent_ws.z, o.normal_ws.z
+                    );
+
+                float3 normal_ws = normalize(mul(normal_ts, tbn));
+                
                 half3 light_direction = - GetMainLight().direction;
                 half3 light_color = GetMainLight().color;
 
-                float3 diffuse_light = calc_lambert_diffuse(light_direction, light_color, o.normal_ws);
-                float3 specular_light = calc_phong_specular(light_direction, light_color, o.world_pos, o.normal_ws);
-                float3 rim_light = calc_rim_light(light_direction, light_color, o.world_pos, o.normal_ws);
+                float3 diffuse_light = calc_lambert_diffuse(light_direction, light_color, normal_ws);
+                float3 specular_light = calc_phong_specular(light_direction, light_color, o.world_pos, normal_ws);
+                float3 rim_light = calc_rim_light(light_direction, light_color, o.world_pos, normal_ws);
                 float3 total_light = 0.5 * (diffuse_light + specular_light + 3*rim_light);
 
                 // point light
@@ -107,8 +130,8 @@ Shader "Custom/TriangleShader"
                     float3 color = light.color;
                     float attenuation = light.distanceAttenuation;
 
-                    diffuse_light = calc_lambert_diffuse(direction, color, o.normal_ws) * attenuation;
-                    specular_light = calc_phong_specular(direction, color, o.world_pos, o.normal_ws) * attenuation;
+                    diffuse_light = calc_lambert_diffuse(direction, color, normal_ws) * attenuation;
+                    specular_light = calc_phong_specular(direction, color, o.world_pos, normal_ws) * attenuation;
                     total_light += diffuse_light + specular_light;
                 }
                 
