@@ -67,7 +67,7 @@ Shader "Custom/TriangleShader"
 
             float3 calc_rim_light(half3 light_direction, half3 light_color, float3 surface_potision, float3 surface_normal)
             {
-                half3 light_direction_view = TransformWorldToViewNormal(light_direction);
+                half3 light_direction_view = TransformWorldToView(light_direction);
                 float3 surface_potision_view = TransformWorldToView(surface_potision);
                 float3 surface_normal_view = TransformWorldToViewNormal(surface_normal);
                 float power1 = 1 - saturate(dot(surface_normal_view, light_direction_view));
