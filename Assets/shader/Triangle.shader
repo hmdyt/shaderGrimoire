@@ -106,9 +106,9 @@ Shader "Custom/TriangleShader"
                 float3 normal_ts = UnpackNormal(normal_map);
 
                 float3x3 tbn = float3x3(
-                    o.tangent_ws.x, o.bitangent_ws.x, o.normal_ws.x,
-                    o.tangent_ws.y, o.bitangent_ws.y, o.normal_ws.y,
-                    o.tangent_ws.z, o.bitangent_ws.z, o.normal_ws.z
+                    o.tangent_ws.x, o.tangent_ws.y, o.tangent_ws.z,
+                    o.bitangent_ws.x, o.bitangent_ws.y, o.bitangent_ws.z,
+                    o.normal_ws.x, o.normal_ws.y, o.normal_ws.z
                     );
 
                 float3 normal_ws = normalize(mul(normal_ts, tbn));
